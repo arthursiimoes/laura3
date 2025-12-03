@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>ENIGMA - FASE 3</title>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
+  <style>
+    /* ================= TEMA: CELESTIAL NIGHT (AZUL & PRATA) ================= */
+    :root {
+      --bg-deep: #050b14;
+      --accent: #aabfff; /* Azul pálido/Prata */
+      --glow: rgba(170, 191, 255, 0.6);
+      --glass: rgba(20, 30, 50, 0.7);
+      --border: 1px solid rgba(170, 191, 255, 0.3);
+      --font-main: 'Montserrat', sans-serif;
+      --error: #ff6b6b;
+      --success: #51cf66;
+    }
+
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;700&display=swap');
+
+    html, body {
+      height: 100%; margin: 0; padding: 0;
+      background-color: var(--bg-deep);
+      background-image: 
+        radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 3px),
+        radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 2px),
+        radial-gradient(white, rgba(255,255,255,.1) 2px, transparent 3px);
+      background-size: 550px 550px, 350px 350px, 250px 250px;
+      background-position: 0 0, 40px 60px, 130px 270px;
+      color: var(--accent);
+      font-family: var(--font-main);
+      overflow-x: hidden; user-select: none; -webkit-user-select: none;
+    }
+
+    body {
+      display: flex; flex-direction: column;
+      justify-content: center; align-items: center;
+      padding: 20px; box-sizing: border-box;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    /* ================= ESTILO GLASSMORPHISM ================= */
+    .card {
+      width: 100%; max-width: 400px;
+      background: var(--glass);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      border: var(--border);
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+      border-radius: 20px;
+      padding: 30px;
+      text-align: center;
+      position: relative;
+      animation: floatIn 0.8s ease-out;
+      display: flex; flex-direction: column; align-items: center;
+    }
+
+    @keyframes floatIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+    h2 { 
+      font-weight: 300; letter-spacing: 4px; text-transform: uppercase;
+      margin-bottom: 20px; font-size: 1.5rem; text-shadow: 0 0 10px var(--glow); width: 100%;
+    }
+    
+    p { font-size: 0.95rem; line-height: 1.6; color: #cbd5e1; margin-bottom: 20px; font-weight: 300; width: 100%; }
+    
+    .hidden { display: none !important; }
+
+    /* INPUTS & BUTTONS */
+    input {
+      width: 100%; max-width: 100%; background: rgba(0,0,0,0.3);
+      border: 1px solid var(--accent); color: #fff;
+      padding: 14px; border-radius: 50px; text-align: center;
+      margin-top: 10px; font-size: 1rem; outline: none;
+      font-family: var(--font-main); transition: 0.3s; box-sizing: border-box;
+    }
+    input:focus { box-shadow: 0 0 15px var(--glow); border-color: #fff; }
+    
+    .btn-action {
+      width: 100%; 
+      background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0));
+      border: 1px solid var(--accent); color: #fff;
+      padding: 14px; border-radius: 50px; cursor: pointer;
+      margin-top: 25px; text-transform: uppercase; letter-spacing: 2px; font-weight: 500;
+      transition: 0.3s; box-shadow: 0 5px 15px rgba(0,0,0,0.3); box-sizing: border-box;
+    }
+    .btn-action:hover { background: var(--accent); color: var(--bg-deep); box-shadow: 0 0 20px var(--glow); }
+    .btn-action:active { transform: scale(0.98); }
+
+    .btn-copy {
+      background: transparent; border: 1px dashed var(--accent); color: var(--accent);
+      padding: 8px 16px; border-radius: 8px; font-size: 0.75rem; cursor: pointer;
+      margin-bottom: 20px; opacity: 0.7; transition: 0.3s;
+    }
+    .btn-copy:hover { opacity: 1; background: rgba(255,255,255,0.05); }
+
+    .feedback { min-height: 20px; font-size: 0.85rem; margin-top: 15px; font-weight: 500; }
+
+    /* ================= MINIGAME 1 & 2 ESTILOS (GRID & ASTROLABE) ================= */
+    .star-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+      margin: 20px auto; width: 100%; max-width: 280px; aspect-ratio: 1;
+    }
+    .star-cell {
+      background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 50%; cursor: pointer; transition: 0.2s;
+      box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+    }
+    .star-cell.flash { 
+      background: #fff; box-shadow: 0 0 15px #fff, 0 0 30px var(--accent); border-color: #fff;
+      transform: scale(1.1);
+    }
+    .star-cell.selected { background: var(--accent); box-shadow: 0 0 15px var(--accent); }
+    .star-cell.wrong { background: var(--error); animation: shake 0.3s; }
+
+    .astro-container {
+      position: relative; width: 260px; height: 260px; margin: 20px auto;
+      border-radius: 50%; border: 2px solid var(--accent);
+      background: radial-gradient(circle, #0a1525 0%, #000 100%);
+      box-shadow: 0 0 30px rgba(0,0,0,0.8), inset 0 0 20px rgba(170, 191, 255, 0.2);
+    }
+    .astro-zone {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%;
+      background: conic-gradient(transparent 0deg, var(--accent) 0deg, var(--accent) 30deg, transparent 30deg);
+      opacity: 0.4; mix-blend-mode: screen;
+    }
+    .astro-needle {
+      position: absolute; top: 50%; left: 50%; width: 2px; height: 115px;
+      background: linear-gradient(to top, var(--accent), transparent); 
+      transform-origin: bottom center; transform: translate(-50%, -100%) rotate(0deg); border-radius: 2px;
+    }
+    .astro-needle::after {
+      content: ''; position: absolute; top: 0; left: -3px; width: 8px; height: 8px;
+      background: #fff; border-radius: 50%; box-shadow: 0 0 10px #fff;
+    }
+    .astro-center {
+      position: absolute; top: 50%; left: 50%; width: 10px; height: 10px;
+      background: #fff; border-radius: 50%; transform: translate(-50%, -50%); z-index: 10;
+      box-shadow: 0 0 15px var(--glow);
+    }
+    .astro-status { font-size: 1.5rem; margin-top: 10px; color: var(--accent); letter-spacing: 3px; }
+
+    /* ================= FINAL SCREEN ESTILOS ================= */
+    .code-box {
+      background: rgba(0,0,0,0.4); border: 1px solid var(--accent);
+      color: var(--accent); padding: 15px; font-size: 0.9rem; width: 100%;
+      margin: 10px 0; word-break: break-all; font-family: monospace; letter-spacing: 1px;
+    }
+    
+    .timer-display {
+      font-size: 2.2rem; font-weight: 300; color: #fff; margin: 15px 0;
+      text-shadow: 0 0 20px var(--glow); font-family: monospace;
+    }
+    
+    .final-clue {
+       font-size: 3.5rem; color: #fff; font-weight: 700; margin: 15px 0;
+       text-shadow: 0 0 30px var(--accent); letter-spacing: 5px;
+    }
+
+    /* ESTILO DA FOTO FINAL */
+    .final-photo-container {
+      width: 180px; height: 180px; margin: 25px auto;
+      border-radius: 50%; overflow: hidden;
+      border: 3px solid var(--accent);
+      box-shadow: 0 0 30px var(--glow), inset 0 0 20px rgba(0,0,0,0.5);
+      position: relative;
+    }
+    .final-photo-container img {
+      width: 100%; height: 100%; object-fit: cover;
+      filter: contrast(1.1) brightness(0.9); /* Ajuste para tema noturno */
+    }
+    /* Brilho sobre a foto */
+    .final-photo-container::after {
+      content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.2), transparent 60%);
+      pointer-events: none;
+    }
+
+    @keyframes shake { 0%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} 100%{transform:translateX(0)} }
+  </style>
+</head>
+<body>
+
+  <div class="card" id="screenPassword">
+    <h2>🔐 ACESSO FASE 3</h2>
+    <p>A linguagem das estrelas é codificada.</p>
+    <div class="code-box" id="b64text">...</div>
+    <button class="btn-copy" onclick="copyCode()">COPIAR CÓDIGO</button>
+    <input id="passInput" placeholder="Digite a senha..." style="text-transform: uppercase;">
+    <button class="btn-action" onclick="checkPhasePass()">Decifrar</button>
+    <div id="passFeedback" class="feedback"></div>
+  </div>
+
+  <div class="card hidden" id="screenIntro">
+    <h3>O MISTÉRIO CELESTIAL</h3>
+    <p>Bem-vinda à terceira fase:</p>
+	<h2>A Noite Estrelada</h2>
+    <p>Aqui, olhamos para o céu e para o tempo. As respostas exigem precisão e TALVEZ pesquisa.</p>
+    <button class="btn-action" onclick="nextScreen('screenQ1')">Iniciar Jornada</button>
+	<p><b>💡 DICA:</b> Para prosseguir, olhe para o passado.</p>
+  </div>
+
+  <div class="card hidden" id="screenQ1">
+    <h2>Enigma Celeste I</h2>
+    <p>"Qual era a <b>Fase da Lua</b> exata na noite do nosso primeiro beijo?"</p>
+    <input id="inputQ1" placeholder="Ex: Cheia, Nova...">
+    <button class="btn-action" onclick="checkQ1()">Confirmar</button>
+    <div id="feedQ1" class="feedback" style="color: var(--error)"></div>
+  </div>
+
+  <div class="card hidden" id="screenGame1">
+    <h2>Constelações</h2>
+    <p>Memorize onde as estrelas brilham.</p>
+    <p id="matrixStatus" style="color: var(--accent)">Sequência 1/3</p>
+    <div class="star-grid" id="matrixGrid"></div>
+    <button id="btnMatrixStart" class="btn-action" onclick="startMatrixLevel()">Observar Céu</button>
+  </div>
+
+  <div class="card hidden" id="screenQ2">
+    <h2>Enigma do Tempo II</h2>
+    <p>O tempo é relativo, mas os números não mentem.</p>
+    <p>"Quantos dias <b>exatos</b> se passaram desde que nos conhecemos?"</p>
+    <input id="inputQ2" type="number" placeholder="Digite o número">
+    <button class="btn-action" onclick="checkQ2()">Calcular</button>
+    <div id="feedQ2" class="feedback" style="color: var(--error)"></div>
+  </div>
+
+  <div class="card hidden" id="screenGame2">
+    <h2>O Astrolábio</h2>
+    <p>Alinhe os nossos destinos.</p>
+    <div class="astro-status" id="lockStatus">★ 0/3</div>
+    <div class="astro-container">
+      <div class="astro-zone" id="safeZone"></div>
+      <div class="astro-needle" id="safeNeedle"></div>
+      <div class="astro-center"></div>
+    </div>
+    <button class="btn-action" id="btnLock" onclick="checkLock()">Sincronizar</button>
+  </div>
+
+  <div class="card hidden" id="screenQ3">
+    <h2>Enigma Final III</h2>
+    <p>Uma última charada:</p>
+    <p>"Eu nunca tenho fim, posso continuar para sempre, e quanto mais você me conta, mais eu cresço. O que sou?"</p>
+    <input id="inputQ3" placeholder="Sua resposta...">
+    <button class="btn-action" onclick="checkQ3()">Revelar Destino</button>
+    <div id="feedQ3" class="feedback" style="color: var(--error)"></div>
+  </div>
+
+  <div class="card hidden" id="screenFinal">
+    <h2>Fase 3 Completa</h2>
+	<p>Parabéns, você navegou pelas estrelas com sucesso. Você está cada vez mais perto hein?</p>
+    
+    <div style="margin: 20px 0;">
+      <p style="text-transform: uppercase; font-size: 0.8rem; letter-spacing: 3px; opacity: 0.8;">Terceira Pista:</p>
+      <div class="final-clue">**/12</div>
+    </div>
+
+    <div class="final-photo-container">
+      <img src="foto.jpg" alt="Nós na Galáxia">
+    </div>
+    <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; width: 100%; margin-top: 20px;">
+      <p>Próxima fase desbloqueia em:</p>
+      <div class="timer-display" id="countdownDisplay">12:00:00</div>
+    </div>
+  </div>
+
+<script>
+  /* ================= CONFIGURAÇÕES (EDITE AQUI) ================= */
+  
+  const PHASE_PASS = "UNIVERSO"; // Senha que ela vai colar
+  const ANSWER_1 = "minguante";    // Fase da Lua (Pesquise a data real!)
+  const ANSWER_2 = "84";          // Dias de namoro (Calcule o real!)
+  const ANSWER_3 = "infinito";         // Resposta da charada (Mapa)
+  const UNLOCK_HOURS = 12;         // Countdown de 12 horas
+
+  /* ================= ÁUDIO (WEB AUDIO API) ================= */
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  
+  function playTone(freq, type='sine', dur=0.2) {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + dur);
+  }
+
+  function soundSuccess() { playTone(600, 'sine', 0.1); setTimeout(()=>playTone(800, 'sine', 0.3), 150); }
+  function soundError() { playTone(150, 'sawtooth', 0.4); }
+  function soundClick() { playTone(400, 'sine', 0.05); }
+
+  /* ================= NAVEGAÇÃO ================= */
+  function nextScreen(id) {
+    document.querySelectorAll('.card').forEach(c => c.classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
+  }
+
+  window.onload = () => {
+    document.getElementById('b64text').innerText = btoa(PHASE_PASS);
+    // Verifica se já completou
+    if(localStorage.getItem('fase3_complete')) {
+        nextScreen('screenFinal');
+        startCountdown();
+    }
+  };
+
+  /* --- TELA 1 --- */
+  function copyCode() {
+    navigator.clipboard.writeText(document.getElementById('b64text').innerText);
+    const btn = document.querySelector('.btn-copy');
+    btn.innerText = "COPIADO!";
+    setTimeout(() => btn.innerText = "COPIAR CÓDIGO", 2000);
+  }
+
+  function checkPhasePass() {
+    if (passInput.value.trim().toUpperCase() === PHASE_PASS) {
+      soundSuccess(); nextScreen('screenIntro');
+    } else {
+      soundError(); passFeedback.innerText = "Código incorreto.";
+    }
+  }
+
+  /* --- TELA 3 (LUA) --- */
+  function checkQ1() {
+    if (inputQ1.value.trim().toLowerCase().includes(ANSWER_1)) {
+      soundSuccess(); nextScreen('screenGame1'); setupMatrix();
+    } else {
+      soundError(); feedQ1.innerText = "A lua não estava assim...";
+    }
+  }
+
+  /* --- GAME 1 (CONSTELAÇÕES - HARD MODE) --- */
+  let mLevel = 1, mPattern = [], uPattern = [], mInput = false;
+
+  function setupMatrix() {
+    const grid = document.getElementById('matrixGrid');
+    grid.innerHTML = '';
+    for(let i=0; i<16; i++) {
+      let d = document.createElement('div');
+      d.className = 'star-cell'; d.id = `star-${i}`;
+      d.onclick = () => starClick(i);
+      grid.appendChild(d);
+    }
+  }
+
+  function startMatrixLevel() {
+    document.getElementById('btnMatrixStart').classList.add('hidden');
+    mPattern = []; uPattern = []; mInput = false;
+    
+    // DIFICULDADE AUMENTADA
+    // Nível 1: 5 estrelas
+    // Nível 2: 7 estrelas
+    // Nível 3: 9 estrelas
+    let count = mLevel === 1 ? 5 : (mLevel === 2 ? 7 : 9);
+    
+    // Velocidade aumenta
+    let speed = mLevel === 1 ? 1000 : (mLevel === 2 ? 800 : 700);
+
+    document.getElementById('matrixStatus').innerText = `Observando...`;
+
+    while(mPattern.length < count) {
+      let r = Math.floor(Math.random()*16);
+      if(!mPattern.includes(r)) mPattern.push(r);
+    }
+
+    mPattern.forEach(idx => document.getElementById(`star-${idx}`).classList.add('flash'));
+
+    setTimeout(() => {
+      document.querySelectorAll('.star-cell').forEach(c => c.classList.remove('flash'));
+      document.getElementById('matrixStatus').innerText = "Repita a Constelação";
+      mInput = true;
+    }, speed);
+  }
+
+  function starClick(idx) {
+    if(!mInput) return;
+    soundClick();
+    let cell = document.getElementById(`star-${idx}`);
+
+    if(mPattern.includes(idx)) {
+      if(!uPattern.includes(idx)) {
+        uPattern.push(idx); cell.classList.add('selected');
+        if(uPattern.length === mPattern.length) {
+          mInput = false; soundSuccess();
+          if(mLevel < 3) {
+            mLevel++; 
+            setTimeout(() => {
+                document.querySelectorAll('.star-cell').forEach(c => c.classList.remove('selected'));
+                document.getElementById('btnMatrixStart').classList.remove('hidden');
+                document.getElementById('matrixStatus').innerText = `Sequência ${mLevel}/3`;
+            }, 1000);
+          } else {
+             setTimeout(() => nextScreen('screenQ2'), 1000);
+          }
+        }
+      }
+    } else {
+      soundError(); cell.classList.add('wrong'); mInput = false;
+      document.getElementById('matrixStatus').innerText = "Estrela errada.";
+      setTimeout(() => {
+        cell.classList.remove('wrong');
+        document.querySelectorAll('.star-cell').forEach(c => c.classList.remove('selected'));
+        document.getElementById('btnMatrixStart').classList.remove('hidden');
+      }, 1000);
+    }
+  }
+
+  /* --- TELA 5 (DIAS) --- */
+  function checkQ2() {
+    if (inputQ2.value.trim() === ANSWER_2) {
+      soundSuccess(); nextScreen('screenGame2'); startAstroGame();
+    } else {
+      soundError(); feedQ2.innerText = "Cálculo incorreto.";
+    }
+  }
+
+  /* --- GAME 2 (ASTROLABIO) --- */
+  let aLevel = 0, aAngle = 0, aSpeed = 1.5, tAngle = 0, tWidth = 50, aAnim, aPlay = false;
+
+  function startAstroGame() {
+    aLevel = 0; document.getElementById('lockStatus').innerText = "★ 0/3";
+    nextAstroLevel();
+  }
+
+  function nextAstroLevel() {
+    aPlay = true;
+    // Velocidade ajustada para ser desafiadora mas possível
+    if(aLevel === 0) { aSpeed = 2.0; tWidth = 60; }
+    if(aLevel === 1) { aSpeed = 3.5; tWidth = 50; }
+    if(aLevel === 2) { aSpeed = 5.0; tWidth = 40; }
+
+    tAngle = Math.floor(Math.random() * (360 - tWidth));
+    const zone = document.getElementById('safeZone');
+    zone.style.background = `conic-gradient(transparent ${tAngle}deg, var(--accent) ${tAngle}deg, var(--accent) ${tAngle + tWidth}deg, transparent ${tAngle + tWidth}deg)`;
+    
+    updateNeedle();
+  }
+
+  function updateNeedle() {
+    if(!aPlay) return;
+    aAngle += aSpeed; if(aAngle >= 360) aAngle = 0;
+    document.getElementById('safeNeedle').style.transform = `translate(-50%, -100%) rotate(${aAngle}deg)`;
+    aAnim = requestAnimationFrame(updateNeedle);
+  }
+
+  function checkLock() {
+    if(!aPlay) return;
+    cancelAnimationFrame(aAnim);
+    let norm = aAngle % 360;
+    
+    if(norm >= tAngle && norm <= (tAngle + tWidth)) {
+        soundSuccess(); aLevel++;
+        document.getElementById('lockStatus').innerText = `★ ${aLevel}/3`;
+        if(aLevel >= 3) {
+            aPlay = false; document.getElementById('btnLock').classList.add('hidden');
+            setTimeout(() => nextScreen('screenQ3'), 1000);
+        } else {
+            setTimeout(nextAstroLevel, 800);
+        }
+    } else {
+        soundError(); document.getElementById('lockStatus').innerText = "Perdeu o alinhamento!";
+        document.getElementById('lockStatus').style.color = "var(--error)";
+        aPlay = false;
+        setTimeout(() => {
+            aLevel = 0; 
+            document.getElementById('lockStatus').style.color = "var(--accent)";
+            document.getElementById('lockStatus').innerText = "★ 0/3";
+            startAstroGame();
+        }, 1500);
+    }
+  }
+
+  /* --- TELA 7 (CHARADA) --- */
+  function checkQ3() {
+    if (inputQ3.value.trim().toLowerCase().includes(ANSWER_3)) {
+      soundSuccess(); nextScreen('screenFinal'); fireConfetti();
+      localStorage.setItem('fase3_complete', 'true');
+      
+      if(!localStorage.getItem('fase4_unlock')) {
+          const unlock = Date.now() + (UNLOCK_HOURS * 60 * 60 * 1000);
+          localStorage.setItem('fase4_unlock', unlock);
+      }
+      startCountdown();
+    } else {
+      soundError(); feedQ3.innerText = "Resposta incorreta.";
+    }
+  }
+
+  function fireConfetti() {
+    confetti({ particleCount: 200, spread: 100, colors: ['#aabfff', '#ffffff'] });
+  }
+
+  /* --- COUNTDOWN 12H --- */
+  function startCountdown() {
+    const unlockTime = parseInt(localStorage.getItem('fase4_unlock'));
+    const display = document.getElementById("countdownDisplay");
+
+    setInterval(() => {
+      const now = Date.now();
+      const diff = unlockTime - now;
+
+      if (diff <= 0) {
+        display.innerText = "FASE 4 DISPONÍVEL";
+        display.style.color = "var(--success)";
+        return;
+      }
+
+      const h = Math.floor(diff / (1000 * 60 * 60)).toString().padStart(2, '0');
+      const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)).toString().padStart(2, '0');
+      const s = Math.floor((diff % (1000 * 60)) / 1000).toString().padStart(2, '0');
+      display.innerText = `${h}:${m}:${s}`;
+    }, 1000);
+  }
+</script>
+</body>
+</html>
