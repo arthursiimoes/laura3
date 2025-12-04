@@ -150,11 +150,6 @@
       margin: 10px 0; word-break: break-all; font-family: monospace; letter-spacing: 1px;
     }
     
-    .timer-display {
-      font-size: 2.2rem; font-weight: 300; color: #fff; margin: 15px 0;
-      text-shadow: 0 0 20px var(--glow); font-family: monospace;
-    }
-    
     .final-clue {
        font-size: 3.5rem; color: #fff; font-weight: 700; margin: 15px 0;
        text-shadow: 0 0 30px var(--accent); letter-spacing: 5px;
@@ -188,7 +183,7 @@
     <h2>🔐 ACESSO FASE 3</h2>
     <p>A linguagem das estrelas é codificada.</p>
     <div class="code-box" id="b64text">...</div>
-    <button class="btn-copy" onclick="copyCode()">📄 COPIAR</button>
+    <button class="btn-copy" onclick="copyCode()">COPIAR CÓDIGO</button>
     <input id="passInput" placeholder="Digite a senha..." style="text-transform: uppercase;">
     <button class="btn-action" onclick="checkPhasePass()">Decifrar</button>
     <div id="passFeedback" class="feedback"></div>
@@ -261,9 +256,11 @@
     <div class="final-photo-container">
       <img src="foto.jpg" alt="Nós na Galáxia">
     </div>
+
     <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; width: 100%; margin-top: 20px;">
-      <p>Próxima fase desbloqueia em:</p>
-      <div class="timer-display" id="countdownDisplay">12:00:00</div>
+      <button class="btn-action" onclick="window.location.href='https://arthursiimoes.github.io/laura4'">
+         IR PARA FASE 4 🚀
+      </button>
     </div>
   </div>
 
@@ -274,7 +271,7 @@
   const ANSWER_1 = "minguante";    // Fase da Lua (Pesquise a data real!)
   const ANSWER_2 = "84";          // Dias de namoro (Calcule o real!)
   const ANSWER_3 = "infinito";         // Resposta da charada (Mapa)
-  const UNLOCK_HOURS = 12;         // Countdown de 12 horas
+  // UNLOCK_HOURS removido
 
   /* ================= ÁUDIO (WEB AUDIO API) ================= */
   const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -306,7 +303,7 @@
     // Verifica se já completou
     if(localStorage.getItem('fase3_complete')) {
         nextScreen('screenFinal');
-        startCountdown();
+        // startCountdown() removido
     }
   };
 
@@ -481,12 +478,7 @@
     if (inputQ3.value.trim().toLowerCase().includes(ANSWER_3)) {
       soundSuccess(); nextScreen('screenFinal'); fireConfetti();
       localStorage.setItem('fase3_complete', 'true');
-      
-      if(!localStorage.getItem('fase4_unlock')) {
-          const unlock = Date.now() + (UNLOCK_HOURS * 60 * 60 * 1000);
-          localStorage.setItem('fase4_unlock', unlock);
-      }
-      startCountdown();
+      // Lógica de tempo removida, libera imediatamente
     } else {
       soundError(); feedQ3.innerText = "Resposta incorreta.";
     }
@@ -496,27 +488,7 @@
     confetti({ particleCount: 200, spread: 100, colors: ['#aabfff', '#ffffff'] });
   }
 
-  /* --- COUNTDOWN 12H --- */
-  function startCountdown() {
-    const unlockTime = parseInt(localStorage.getItem('fase4_unlock'));
-    const display = document.getElementById("countdownDisplay");
-
-    setInterval(() => {
-      const now = Date.now();
-      const diff = unlockTime - now;
-
-      if (diff <= 0) {
-        display.innerText = "FASE 4 DISPONÍVEL";
-        display.style.color = "var(--success)";
-        return;
-      }
-
-      const h = Math.floor(diff / (1000 * 60 * 60)).toString().padStart(2, '0');
-      const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)).toString().padStart(2, '0');
-      const s = Math.floor((diff % (1000 * 60)) / 1000).toString().padStart(2, '0');
-      display.innerText = `${h}:${m}:${s}`;
-    }, 1000);
-  }
+  // Função startCountdown removida completamente
 </script>
 </body>
 </html>
